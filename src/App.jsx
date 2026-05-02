@@ -140,11 +140,11 @@ function HeardleGame({ streak, setStreak }) {
                   g.title.toLowerCase() === currentSong.title.toLowerCase()
               )
             }
-            streak={0}
+            streak={streak}
           />
         </div>
       </div>
-            streak={streak}
+
       {!gameState.isRevealed && gameState.guesses.length < 6 && (
         <GuessAutocompleteInput
           onSubmit={handleGuessSubmit}
@@ -216,7 +216,7 @@ function App() {
       {/* ChooseArtist panel removed per request */}
       <div className="min-h-screen bg-gray-900 text-white p-4">
         <header className="max-w-4xl mx-auto text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Povlao Guess</h1>
+          <h1 className="text-4xl font-bold mb-2 glitch-title">Povlao Guess</h1>
         </header>
         <main className="max-w-4xl mx-auto">
           <Routes>

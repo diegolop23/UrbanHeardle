@@ -315,10 +315,10 @@ const AudioPlayer = ({
                 writingMode: "vertical-lr",
                 direction: "rtl",
                 //WebkitAppearance: "slider-vertical",
-                background: `linear-gradient(to top, white ${
+                background: `linear-gradient(to top, #39FF14 ${
                   volume * 100
-                }%, rgba(255,255,255,0.2) ${volume * 100}%)`,
-                borderRadius: "10px",
+                }%, rgba(57,255,20,0.15) ${volume * 100}%)`,
+                borderRadius: "0px",
               }}
             />
           </div>

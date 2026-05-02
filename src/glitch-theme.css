@@ -1,0 +1,679 @@
+/* ================================================================
+   GLITCH / TERMINAL / NEON-GREEN UNDERGROUND THEME
+   UrbanHeardle Visual Overhaul
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap');
+
+/* ── CSS VARIABLES ─────────────────────────────────────────────── */
+:root {
+  --gt-bg:         #0d1117;
+  --gt-neon:       #39FF14;
+  --gt-neon-alt:   #00FF41;
+  --gt-card:       #2a2a2a;
+  --gt-card-2:     #3d3d3d;
+  --gt-text:       #e0e0e0;
+  --gt-text-dim:   #6e7681;
+  --gt-heading:    #ffffff;
+  --gt-deep:       #090c10;
+  --gt-neon-dim:   rgba(57, 255, 20, 0.10);
+  --gt-neon-glow:  0 0 8px #39FF14, inset 0 0 4px rgba(57, 255, 20, 0.1);
+  --gt-red:        #ff003c;
+  --gt-cyan:       #00ffcc;
+  --gt-font-disp:  'Bebas Neue', 'Anton', sans-serif;
+  --gt-font-mono:  'JetBrains Mono', 'Share Tech Mono', monospace;
+}
+
+/* ── BASE ──────────────────────────────────────────────────────── */
+html {
+  background-color: var(--gt-bg);
+}
+
+body {
+  font-family: var(--gt-font-mono) !important;
+  background-color: var(--gt-bg) !important;
+  color: var(--gt-text) !important;
+}
+
+/* CRT scanlines overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 3px
+  );
+}
+
+/* Noise / grain overlay via SVG feTurbulence */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── TYPOGRAPHY ────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--gt-font-disp) !important;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--gt-heading) !important;
+}
+
+p, span, label, li, a {
+  font-family: var(--gt-font-mono) !important;
+}
+
+/* ── GLITCH ANIMATIONS ─────────────────────────────────────────── */
+@keyframes glitch-burst {
+  0%,  87%, 100% {
+    text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan);
+    transform: translate(0, 0) skewX(0deg);
+    clip-path: none;
+  }
+  88% {
+    text-shadow: 4px 0 var(--gt-red), -4px 0 var(--gt-cyan);
+    transform: translate(-3px, 1px) skewX(2deg);
+    clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%);
+  }
+  89% {
+    text-shadow: -3px 0 var(--gt-red), 3px 0 var(--gt-cyan);
+    transform: translate(3px, -1px) skewX(-1deg);
+    clip-path: polygon(0 55%, 100% 55%, 100% 75%, 0 75%);
+  }
+  90% {
+    text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan);
+    transform: translate(0, 0) skewX(0deg);
+    clip-path: none;
+  }
+}
+
+@keyframes glitch-btn-hover {
+  0%, 100% {
+    clip-path: none;
+    transform: translate(0, 0);
+  }
+  25% {
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translate(2px, 0);
+  }
+  50% {
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    transform: translate(-2px, 0);
+  }
+  75% {
+    clip-path: none;
+    transform: translate(1px, 0);
+  }
+}
+
+@keyframes gt-pulse-border {
+  0%, 100% { border-color: rgba(57, 255, 20, 0.4); }
+  50%       { border-color: rgba(57, 255, 20, 0.9); }
+}
+
+/* ── GLITCH TITLE ──────────────────────────────────────────────── */
+.glitch-title {
+  font-family: var(--gt-font-disp) !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan) !important;
+  animation: glitch-burst 9s infinite;
+  color: var(--gt-heading) !important;
+}
+
+/* ── GLOBAL BORDER-RADIUS REMOVAL ─────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* Exception: spinners stay circular */
+.animate-spin {
+  border-radius: 50% !important;
+}
+
+/* ── TAILWIND BG OVERRIDES ─────────────────────────────────────── */
+[class*="bg-gray"] {
+  background-color: var(--gt-bg) !important;
+}
+
+/* More specific gray shades */
+.bg-gray-900 {
+  background-color: var(--gt-bg) !important;
+}
+
+.bg-gray-800 {
+  background-color: #161b22 !important;
+}
+
+.bg-gray-700 {
+  background-color: var(--gt-card) !important;
+}
+
+.bg-gray-600 {
+  background-color: var(--gt-card-2) !important;
+}
+
+.bg-gray-500 {
+  background-color: #333 !important;
+}
+
+.bg-black {
+  background-color: #090c10 !important;
+}
+
+/* Gradient → flat override */
+.bg-gradient-to-br,
+.from-gray-900,
+.via-gray-800,
+.to-black {
+  background-image: none !important;
+  background-color: var(--gt-bg) !important;
+}
+
+/* Blue backgrounds → transparent neon border */
+[class*="bg-blue"] {
+  background-color: transparent !important;
+  color: var(--gt-neon) !important;
+  border: 1px solid var(--gt-neon) !important;
+}
+
+/* ── TAILWIND TEXT OVERRIDES ───────────────────────────────────── */
+.text-gray-400 {
+  color: var(--gt-text-dim) !important;
+}
+
+.text-gray-300 {
+  color: var(--gt-text) !important;
+}
+
+.text-gray-500 {
+  color: #555 !important;
+}
+
+.text-white {
+  color: var(--gt-heading) !important;
+}
+
+.text-green-400 {
+  color: var(--gt-neon) !important;
+}
+
+/* Repurpose yellow streak counter as neon */
+.text-yellow-400 {
+  color: var(--gt-neon) !important;
+}
+
+/* Tweet/Share button text */
+.text-black {
+  color: var(--gt-neon) !important;
+}
+
+/* Tweet/Share SVG icon fill */
+.fill-black {
+  fill: var(--gt-neon) !important;
+}
+
+/* ── TAILWIND BORDER OVERRIDES ─────────────────────────────────── */
+[class*="border-gray"] {
+  border-color: rgba(57, 255, 20, 0.25) !important;
+}
+
+.border-gray-700 {
+  border-color: rgba(57, 255, 20, 0.30) !important;
+}
+
+.border-gray-800 {
+  border-color: rgba(57, 255, 20, 0.15) !important;
+}
+
+.border-green-500 {
+  border-color: var(--gt-neon) !important;
+}
+
+/* ── ROUNDEDNESS REMOVAL (Tailwind classes) ────────────────────── */
+[class*="rounded"] {
+  border-radius: 0 !important;
+}
+
+/* Keep spinner circular */
+.rounded-full.animate-spin,
+[class*="rounded"].animate-spin {
+  border-radius: 9999px !important;
+}
+
+/* ── DIVIDER ───────────────────────────────────────────────────── */
+.bg-gray-600.opacity-50 {
+  background-color: rgba(57, 255, 20, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* ── GLITCH CARD — corner-marker panels ────────────────────────── */
+.glitch-card {
+  position: relative;
+  border: 1px dashed rgba(57, 255, 20, 0.40) !important;
+  border-radius: 0 !important;
+  background-color: var(--gt-card) !important;
+  box-shadow: var(--gt-neon-glow);
+}
+
+/* Top-left corner marker */
+.glitch-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--gt-neon);
+  border-left: 2px solid var(--gt-neon);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Bottom-right corner marker */
+.glitch-card::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid var(--gt-neon);
+  border-right: 2px solid var(--gt-neon);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── BUTTONS ───────────────────────────────────────────────────── */
+button,
+.btn,
+[type="button"] {
+  font-family: var(--gt-font-mono) !important;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 0 !important;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background-color: transparent !important;
+  border: 1px solid var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+}
+
+button:hover,
+.btn:hover,
+[type="button"]:hover {
+  background-color: var(--gt-neon-dim) !important;
+  box-shadow: 0 0 12px #39FF14 !important;
+  animation: glitch-btn-hover 0.3s ease;
+}
+
+button:disabled,
+.btn:disabled,
+[type="button"]:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+/* Primary action (was blue-600) */
+.bg-blue-600 {
+  background-color: transparent !important;
+  color: var(--gt-neon) !important;
+  border: 1px solid var(--gt-neon) !important;
+}
+
+.bg-blue-600:hover,
+.hover\:bg-blue-700:hover {
+  background-color: var(--gt-neon-dim) !important;
+  box-shadow: var(--gt-neon-glow) !important;
+}
+
+.bg-blue-600:disabled,
+.disabled\:opacity-50:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+/* Secondary gray buttons */
+button.bg-gray-700,
+button.bg-gray-800 {
+  background-color: transparent !important;
+  border: 1px solid rgba(57, 255, 20, 0.35) !important;
+  color: var(--gt-text) !important;
+}
+
+button.bg-gray-700:hover,
+button.hover\:bg-gray-600:hover,
+button.hover\:bg-gray-700:hover {
+  background-color: var(--gt-neon-dim) !important;
+  border-color: var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+}
+
+/* Submit button text override — ensure neon not white */
+button[type="submit"] {
+  color: var(--gt-neon) !important;
+}
+
+/* ── PLAY / PAUSE BUTTON (over album cover) ────────────────────── */
+.bg-white.bg-opacity-20 {
+  background-color: rgba(0, 0, 0, 0.65) !important;
+  border: 1px solid rgba(57, 255, 20, 0.55) !important;
+  border-radius: 0 !important;
+}
+
+.bg-white.bg-opacity-20:hover,
+.hover\:bg-opacity-30:hover {
+  background-color: rgba(57, 255, 20, 0.10) !important;
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.40) !important;
+}
+
+/* Play / Pause / Skip icon colour */
+.text-gray-800 {
+  color: var(--gt-neon) !important;
+}
+
+/* ── INPUTS ────────────────────────────────────────────────────── */
+input,
+textarea,
+select {
+  font-family: var(--gt-font-mono) !important;
+  background-color: #111 !important;
+  border: 1px solid var(--gt-card-2) !important;
+  border-radius: 0 !important;
+  color: var(--gt-text) !important;
+  caret-color: var(--gt-neon);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--gt-neon) !important;
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.25) !important;
+  /* Override Tailwind focus ring */
+  --tw-ring-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(224, 224, 224, 0.25) !important;
+}
+
+/* Range inputs should not have the dark background */
+input[type="range"] {
+  background-color: transparent !important;
+  border: none !important;
+  accent-color: var(--gt-neon);
+}
+
+/* ── AUTOCOMPLETE DROPDOWN ─────────────────────────────────────── */
+ul[class*="bg-gray-800"][class*="border"] {
+  background-color: #1a1a1a !important;
+  border: 1px solid var(--gt-neon) !important;
+  border-radius: 0 !important;
+}
+
+ul[class*="bg-gray-800"] li {
+  color: var(--gt-text) !important;
+  transition: all 0.1s ease;
+}
+
+ul[class*="bg-gray-800"] li:hover {
+  background-color: var(--gt-neon-dim) !important;
+  color: var(--gt-neon) !important;
+}
+
+.hover\:bg-gray-700:hover {
+  background-color: var(--gt-neon-dim) !important;
+  color: var(--gt-neon) !important;
+}
+
+/* ── NAVBAR / GAME MODE BAR ────────────────────────────────────── */
+.game-mode-bar {
+  position: relative;
+  border-bottom: 1px dashed rgba(57, 255, 20, 0.30) !important;
+  background-color: var(--gt-bg) !important;
+}
+
+/* Vertical "SYS:ONLINE" status label */
+.game-mode-bar::after {
+  content: 'SYS:ONLINE';
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--gt-font-mono);
+  font-size: 0.55rem;
+  color: rgba(57, 255, 20, 0.35);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Active nav link */
+a.bg-gray-700 {
+  background-color: transparent !important;
+  border: 1px solid var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+  box-shadow: 0 0 6px rgba(57, 255, 20, 0.25) !important;
+}
+
+/* Inactive nav link */
+a.bg-gray-800 {
+  background-color: transparent !important;
+  border: 1px dashed rgba(57, 255, 20, 0.25) !important;
+  color: var(--gt-text-dim) !important;
+}
+
+a.bg-gray-800:hover,
+a.hover\:bg-gray-700:hover {
+  border-color: rgba(57, 255, 20, 0.60) !important;
+  color: var(--gt-neon) !important;
+  background-color: var(--gt-neon-dim) !important;
+}
+
+/* ── PROGRESS BAR ──────────────────────────────────────────────── */
+.h-2\.5 {
+  background-color: #111418 !important;
+  border: 1px solid rgba(57, 255, 20, 0.15) !important;
+  border-radius: 0 !important;
+}
+
+/* Played portion (was blue-500) */
+.bg-blue-500 {
+  background-color: var(--gt-neon) !important;
+}
+
+/* Locked/dim bar background */
+.bg-gray-500.bg-opacity-50 {
+  background-color: rgba(57, 255, 20, 0.06) !important;
+  opacity: 1 !important;
+}
+
+/* Step marker lines */
+.w-0\.5.h-full.bg-black {
+  background-color: rgba(57, 255, 20, 0.20) !important;
+}
+
+/* ── RESULT DISPLAY ROWS ───────────────────────────────────────── */
+/* Filled rows */
+.rounded-full.bg-gray-700 {
+  border-radius: 0 !important;
+  border: 1px solid rgba(57, 255, 20, 0.20) !important;
+  background-color: #1a1d22 !important;
+}
+
+/* Empty placeholder rows */
+.rounded-full.bg-gray-700.bg-opacity-40 {
+  background-color: rgba(26, 29, 34, 0.40) !important;
+  border: 1px dashed rgba(57, 255, 20, 0.10) !important;
+}
+
+/* Result border divider */
+.border-t.border-gray-700 {
+  border-top: 1px dashed rgba(57, 255, 20, 0.25) !important;
+}
+
+/* ── TWEET / SHARE BUTTON ──────────────────────────────────────── */
+.bg-gray-100 {
+  background-color: transparent !important;
+  border: 1px solid var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+}
+
+.bg-gray-100:hover,
+.hover\:bg-gray-200:hover {
+  background-color: var(--gt-neon-dim) !important;
+}
+
+/* ── ALBUM COVER CONTAINER ─────────────────────────────────────── */
+.rounded-xl.overflow-hidden.flex-1 {
+  border-radius: 0 !important;
+  border: 1px dashed rgba(57, 255, 20, 0.30);
+}
+
+/* ── IMAGES — grayscale + high contrast ────────────────────────── */
+img {
+  filter: grayscale(1) contrast(1.2);
+}
+
+/* ── FEEDBACK WIDGET BUTTON ────────────────────────────────────── */
+.fixed.bottom-4.right-4 button.bg-blue-600 {
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  border: 1px solid var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+  box-shadow: 0 0 6px rgba(57, 255, 20, 0.20);
+}
+
+.fixed.bottom-4.right-4 button.bg-blue-600:hover {
+  background-color: var(--gt-neon-dim) !important;
+  box-shadow: var(--gt-neon-glow) !important;
+}
+
+/* Feedback popup panel */
+.fixed.bottom-4.right-4 .bg-gray-900 {
+  border: 1px dashed rgba(57, 255, 20, 0.40) !important;
+  border-radius: 0 !important;
+  background-color: #161b22 !important;
+}
+
+/* Feedback close button */
+.text-gray-400.hover\:text-white {
+  color: var(--gt-text-dim) !important;
+}
+
+.text-gray-400.hover\:text-white:hover {
+  color: var(--gt-neon) !important;
+}
+
+/* Feedback success message */
+.bg-green-700\/20 {
+  background-color: rgba(57, 255, 20, 0.08) !important;
+}
+
+/* ── ERROR TOAST ───────────────────────────────────────────────── */
+.bg-red-600 {
+  background-color: #150608 !important;
+  border: 1px solid var(--gt-red) !important;
+  color: #ff6666 !important;
+  border-radius: 0 !important;
+}
+
+.text-red-400 {
+  color: #ff4466 !important;
+}
+
+/* ── LOADING INDICATOR ─────────────────────────────────────────── */
+.loading-indicator {
+  font-family: var(--gt-font-mono);
+  color: var(--gt-neon);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.animate-pulse {
+  color: var(--gt-neon) !important;
+}
+
+/* Spinner stays green */
+.border-b-2.border-blue-500 {
+  border-bottom-color: var(--gt-neon) !important;
+}
+
+/* ── VOLUME SLIDER ─────────────────────────────────────────────── */
+input[type='range'] {
+  accent-color: var(--gt-neon);
+}
+
+/* ── SCROLLBAR ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gt-bg) !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--gt-neon) !important;
+  border-radius: 0 !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gt-neon-alt) !important;
+}
+
+/* ── HEADER HUD LABEL ──────────────────────────────────────────── */
+/* Adds a "TRACK:01 / SYS:ONLINE" label above the main title */
+header {
+  position: relative;
+}
+
+header::before {
+  content: '[ TRACK:01 ] SYS:ONLINE';
+  display: block;
+  font-family: var(--gt-font-mono);
+  font-size: 10px;
+  color: var(--gt-neon);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  position: absolute;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* ── DASHED WIREFRAME BORDERS on section wrappers ──────────────── */
+main {
+  border: 1px dashed rgba(57, 255, 20, 0.40);
+  padding: 1rem;
+}
+
+/* ── FOOTER CREDIT ─────────────────────────────────────────────── */
+body > a {
+  font-family: var(--gt-font-mono) !important;
+  font-size: 0.70rem;
+  color: var(--gt-neon) !important;
+}

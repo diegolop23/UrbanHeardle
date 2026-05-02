@@ -5,18 +5,16 @@ const ResultDisplay = ({ guesses, song, hasLost, streak }) => {
   const emptyRows = Array.from({ length: MAX_GUESSES - guesses.length });
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 mb-6 h-full">
+    <div className="bg-gray-800 rounded-lg p-4 mb-6 h-full glitch-card">
       {/* Streak Counter - Added at the top */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Tus intentos</h2>
-        {streak > 0 && (
-          <div className="flex items-center bg-gray-700 rounded-full px-3 py-1">
-            <span className="text-yellow-400 font-bold mr-1">🔥</span>
-            <span className="text-sm font-medium">
-              Racha: <span className="text-yellow-400">{streak}</span>
-            </span>
-          </div>
-        )}
+        <div className="flex items-center bg-gray-700 rounded-full px-3 py-1">
+          <span className="text-yellow-400 font-bold mr-1">🔥</span>
+          <span className="text-sm font-medium">
+            Racha: <span className="text-yellow-400">{streak}</span>
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
