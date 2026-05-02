@@ -82,7 +82,7 @@ if (process.platform == "win32") {
   app.use(express.static(distPath));
 
   // Handle SPA fallback (for React/Vue Router etc.)
-  app.get("*", (req, res, next) => {
+  app.get("/.*/", (req, res, next) => {
     if (req.path.startsWith("/api")) return next(); // skip API
     res.sendFile(path.join(distPath, "index.html"));
   });
