@@ -330,7 +330,10 @@ const AudioPlayer = ({
             className="aspect-square bg-black flex items-center justify-center"
             style={{
               filter: `blur(${getBlurValue()})`,
-              transition: "filter 0.3s ease",
+              transition:
+                gameState.step > 1 || gameState.isRevealed
+                  ? "filter 0.3s ease"
+                  : "none",
             }}
           >
             {song && (
