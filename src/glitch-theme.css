@@ -101,20 +101,10 @@ p, span, label, li, a {
 
 @keyframes glitch-btn-hover {
   0%, 100% {
-    clip-path: none;
-    transform: translate(0, 0);
-  }
-  25% {
-    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-    transform: translate(2px, 0);
+    text-shadow: none;
   }
   50% {
-    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-    transform: translate(-2px, 0);
-  }
-  75% {
-    clip-path: none;
-    transform: translate(1px, 0);
+    text-shadow: 1px 0 var(--gt-red), -1px 0 var(--gt-cyan);
   }
 }
 
@@ -319,7 +309,7 @@ button:hover,
 [type="button"]:hover {
   background-color: var(--gt-neon-dim) !important;
   box-shadow: 0 0 12px #39FF14 !important;
-  animation: glitch-btn-hover 0.3s ease;
+  animation: glitch-btn-hover 0.6s ease;
 }
 
 button:disabled,
@@ -553,9 +543,7 @@ a.hover\:bg-gray-700:hover {
 }
 
 /* ── IMAGES — grayscale + high contrast ────────────────────────── */
-img {
-  filter: grayscale(1) contrast(1.2);
-}
+/* Album covers stay in full colour — no global grayscale */
 
 /* ── FEEDBACK WIDGET BUTTON ────────────────────────────────────── */
 .fixed.bottom-4.right-4 button.bg-blue-600 {
