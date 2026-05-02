@@ -5,7 +5,7 @@ const ResultDisplay = ({ guesses, song, hasLost, streak }) => {
   const emptyRows = Array.from({ length: MAX_GUESSES - guesses.length });
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 mb-6 h-full">
+    <div className="bg-gray-800 rounded-lg p-4 mb-6 h-full glitch-card">
       {/* Streak Counter - Added at the top */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Tus intentos</h2>

@@ -7,7 +7,7 @@ const modes = [
 
 export default function GameModeBar() {
   return (
-    <div className="w-full bg-gray-900 border-b border-gray-800">
+    <div className="w-full bg-gray-900 border-b border-gray-800 game-mode-bar">
       <div className="max-w-4xl mx-auto px-4 py-3 flex gap-2">
         {modes.map((m) => (
           <NavLink

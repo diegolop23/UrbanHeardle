@@ -154,7 +154,7 @@ export default function LyricsGame({ username, streak, setStreak }) {
         {/* Left column: song card + lyrics */}
         <div className="md:col-span-2">
           {/* Song card */}
-          <div className="bg-gray-800 rounded-xl p-4 flex flex-col gap-4">
+          <div className="bg-gray-800 rounded-xl p-4 flex flex-col gap-4 glitch-card">
             {/* Top row: cover and metadata */}
             <div className="flex flex-row items-start gap-4">
               {/* Cover: on the left */}
