@@ -25,6 +25,7 @@
     "music-metadata-browser": "^2.5.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.1.4",
     "urbanheardle": "file:",
     "vite": "^6.2.6"

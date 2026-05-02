@@ -366,13 +366,13 @@ const AudioPlayer = ({
             onClick={() => {
               manualStepAdvance.current = true;
               handleGuessSubmit({
-                artist: "Skip ",
+                artist: "Skip",
                 title: "❌",
               });
             }}
             className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded"
           >
-            Next Step
+            Siguiente Pista
           </button>
         )}
       </div>

@@ -26,24 +26,25 @@ const ResultDisplay = ({ guesses, song, hasLost, streak }) => {
             key={`guess-${index}`}
             className="flex justify-between items-center px-4 py-2 rounded-full bg-gray-700"
           >
-            <span className="font-medium text-sm">
-              <span
-                className={
-                  guess.isCorrectArtist ? "text-green-400" : "text-gray-400"
-                }
-              >
-                {guess.artist}
-              </span>{" "}
-              -{" "}
-              <span
-                className={
-                  guess.isCorrectTitle ? "text-green-400" : "text-gray-400"
-                }
-              >
-                {guess.title}
-              </span>
-            </span>
-          </div>
+                <span className="font-medium text-sm">
+                  <span
+                    className={
+                      guess.isCorrectTitle ? "text-green-400" : "text-gray-400"
+                    }
+                  >
+                    {guess.title}
+                  </span>{" "}
+                  <span className="text-xs">
+                    (<span
+                      className={
+                        guess.isCorrectArtist ? "text-green-400" : "text-gray-400"
+                      }
+                    >
+                      {guess.artist}
+                    </span>)
+                  </span>
+                </span>
+              </div>
         ))}
 
         {/* Empty placeholder bubbles */}
@@ -64,20 +65,20 @@ const ResultDisplay = ({ guesses, song, hasLost, streak }) => {
               <p className="text-red-400 font-medium">Buen intento 😢</p>
               <p className="text-gray-300">La respuesta correcta era:</p>
               <p>
-                {song.artist} - {song.title}
+                <span className="font-semibold text-white">{song.title}</span>{" "}
+                <span className="text-gray-400 text-sm font-normal">({song.artist})</span>
               </p>
             </>
           ) : (
             <>
               <p className="text-green-400 font-medium">Bien hecho! 😎</p>
               <p className="text-gray-300">
-                {song.artist} - {song.title}
+                <span className="font-semibold text-white">{song.title}</span>{" "}
+                <span className="text-gray-400 text-sm font-normal">({song.artist})</span>
               </p>
               <a
                 href={`https://x.com/intent/tweet?text=${encodeURIComponent(
-                  `¡He adivinado la canción "${song.artist} - ${
-                    song.title
-                  }" en ${filledRows.length} intento${
+                  `¡He adivinado la canción "${song.title} (${song.artist})" en ${filledRows.length} intento${
                     filledRows.length === 1 ? "" : "s"
                   } en Povlao guess! ¿Puedes hacerlo mejor?`
                 )}&url=https://povlaoguess.sytes.net/`}

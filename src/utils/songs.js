@@ -6,6 +6,7 @@ export const getRandomSong = async (artist = null) => {
       hostname === "localhost" ? ":5240" : ""
     }${hostname === "localhost" ? "" : "/api"}/songs/random`;
 
+    // artist filtering removed from frontend usage, keep support if provided
     if (artist) {
       url += `?artist=${encodeURIComponent(artist)}`;
     }
@@ -78,6 +79,48 @@ export const getSongList = async () => {
   } catch (error) {
     console.error("Error fetching song list:", error);
     return [];
+  }
+};
+
+export const getRandomSongLyrics = async (artist = null) => {
+  const hostname = window.location.hostname;
+
+  try {
+    let url = `http${hostname === "localhost" ? "" : "s"}://${hostname}${
+      hostname === "localhost" ? ":5240" : ""
+    }${hostname === "localhost" ? "" : "/api"}/songs/random/lyrics`;
+
+    if (artist) {
+      url += `?artist=${encodeURIComponent(artist)}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const responseData = await response.json();
+    const songData = responseData.song;
+
+    return {
+      filePath: `/songs/${songData.file}`,
+      artist: songData.artist?.trim() || "Unknown Artist",
+      title: songData.title?.trim() || "Unknown Title",
+      coverUrl: songData.coverUrl,
+      lyrics: songData.lyrics || null,
+    };
+  } catch (error) {
+    console.error("Error fetching lyrics random song:", error);
+    return null;
   }
 };
 

@@ -13,11 +13,22 @@ let cachedSongs = null;
 let shuffledPlaylist = [];
 let currentIndex = 0;
 let recentlyPlayed = [];
+let cachedLyricsSongs = null;
+let shuffledPlaylistLyrics = [];
+let currentIndexLyrics = 0;
 
 router.get("/list", (req, res) => {
   try {
     if (!cachedSongs) {
-      cachedSongs = db.prepare("SELECT title, artist FROM songs").all();
+      // Try to use pre-loaded cache from startup
+      if (global.initialCachedSongs) {
+        cachedSongs = global.initialCachedSongs;
+        console.log(`[songs/list] Using pre-loaded cache: ${cachedSongs.length} songs`);
+      } else {
+        const sql = "SELECT title, artist FROM songs";
+        console.log(`[songs/list] Running SQL: ${sql}`);
+        cachedSongs = db.prepare(sql).all();
+      }
     }
 
     res.json({
@@ -35,10 +46,16 @@ router.get("/list", (req, res) => {
 router.get("/random", (req, res) => {
   try {
     if (!cachedSongs) {
-      cachedSongs = db
-        .prepare("SELECT title, artist, file, coverUrl FROM songs")
-        .all();
-      console.log(`Cached ${cachedSongs.length} songs`);
+      // Try to use pre-loaded cache from startup
+      if (global.initialCachedSongs) {
+        cachedSongs = global.initialCachedSongs;
+        console.log(`[songs/random] Using pre-loaded cache: ${cachedSongs.length} songs`);
+      } else {
+        cachedSongs = db
+          .prepare("SELECT title, artist, file, coverUrl, albumCover FROM songs")
+          .all();
+        console.log(`[songs/random] Cached ${cachedSongs.length} songs from DB`);
+      }
       shuffledPlaylist = shuffle([...cachedSongs]);
     }
 
@@ -95,7 +112,93 @@ router.get("/random", (req, res) => {
       recentlyPlayed.pop();
     }
 
-    console.log(`Selected: ${nextSong.title} by ${nextSong.artist}`);
+    console.log(`[songs/random] Selected: ${nextSong.title} by ${nextSong.artist}`);
+
+    res.json({ song: nextSong });
+  } catch (err) {
+    console.error("DB Error:", err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Random song that has lyrics (for Guess by Lyrics gamemode)
+router.get("/random/lyrics", (req, res) => {
+  try {
+    const sql = "SELECT title, artist, file, coverUrl, albumCover, lyrics FROM songs WHERE lyrics IS NOT NULL";
+    console.log(`[songs/random/lyrics] Running SQL: ${sql}`);
+    if (!cachedLyricsSongs) {
+      // Try to use pre-loaded cache from startup
+      if (global.initialCachedLyricsSongs) {
+        cachedLyricsSongs = global.initialCachedLyricsSongs;
+        console.log(`[songs/random/lyrics] cache-fill: using pre-loaded ${cachedLyricsSongs.length} rows`);
+      } else {
+        cachedLyricsSongs = db.prepare(sql).all();
+        console.log(`[songs/random/lyrics] cache-fill: returned ${cachedLyricsSongs.length} rows from DB`);
+      }
+      shuffledPlaylistLyrics = shuffle([...cachedLyricsSongs]);
+
+      if (cachedLyricsSongs.length === 0) {
+        try {
+          const total = db.prepare("SELECT COUNT(*) as cnt FROM songs").get();
+          const lyricsCount = db.prepare("SELECT COUNT(*) as cnt FROM songs WHERE lyrics IS NOT NULL").get();
+          console.log(`[songs/random/lyrics] Debug counts: total songs=${total.cnt}, songs_with_lyrics=${lyricsCount.cnt}`);
+        } catch (err) {
+          console.error("[songs/random/lyrics] Error running debug counts:", err.message);
+        }
+      }
+    }
+
+    if (cachedLyricsSongs.length === 0) {
+      return res.status(404).json({ error: "No songs with lyrics available" });
+    }
+
+    const requestedArtist = req.query.artist?.toLowerCase();
+
+    let nextSong = null;
+
+    if (requestedArtist) {
+      const artistSongs = cachedLyricsSongs.filter(
+        (song) => song.artist.toLowerCase() === requestedArtist
+      );
+
+      const availableArtistSongs = artistSongs.filter(
+        (song) => !recentlyPlayed.includes(song.file)
+      );
+
+      if (availableArtistSongs.length === 0) {
+        return res.status(404).json({
+          error: `No non-recent songs available for artist: ${requestedArtist}`,
+        });
+      }
+
+      nextSong =
+        availableArtistSongs[
+          Math.floor(Math.random() * availableArtistSongs.length)
+        ];
+    } else {
+      while (currentIndexLyrics < shuffledPlaylistLyrics.length) {
+        const candidate = shuffledPlaylistLyrics[currentIndexLyrics];
+        currentIndexLyrics++;
+
+        if (!recentlyPlayed.includes(candidate.file)) {
+          nextSong = candidate;
+          break;
+        }
+      }
+
+      if (!nextSong) {
+        shuffledPlaylistLyrics = shuffle([...cachedLyricsSongs]);
+        currentIndexLyrics = 0;
+        nextSong = shuffledPlaylistLyrics[currentIndexLyrics++];
+      }
+    }
+
+    recentlyPlayed.unshift(nextSong.file);
+    if (recentlyPlayed.length > 200) {
+      recentlyPlayed.pop();
+    }
+
+    console.log(`[songs/random/lyrics] Selected: ${nextSong.title} by ${nextSong.artist}`);
 
     res.json({ song: nextSong });
   } catch (err) {
@@ -111,7 +214,7 @@ router.get("/", (req, res) => {
   if (!cachedSongs) {
     try {
       cachedSongs = db
-        .prepare("SELECT title, artist, file, coverUrl FROM songs")
+        .prepare("SELECT title, artist, file, coverUrl, albumCover FROM songs")
         .all();
       console.log(`Cached ${cachedSongs.length} songs`);
     } catch (err) {

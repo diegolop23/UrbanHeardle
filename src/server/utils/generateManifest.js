@@ -31,6 +31,33 @@ const insertOrReplace = db.prepare(`
   VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified)
 `);
 
+// Ensure lyrics column exists (non-destructive)
+const tableInfo = db.prepare("PRAGMA table_info('songs')").all();
+if (!tableInfo.find((c) => c.name === "lyrics")) {
+  try {
+    db.prepare("ALTER TABLE songs ADD COLUMN lyrics TEXT").run();
+    console.log("Added 'lyrics' column to songs table.");
+  } catch (err) {
+    console.error("Failed to add lyrics column:", err.message);
+  }
+}
+
+// Ensure albumCover column exists (non-destructive)
+if (!tableInfo.find((c) => c.name === "albumCover")) {
+  try {
+    db.prepare("ALTER TABLE songs ADD COLUMN albumCover TEXT").run();
+    console.log("Added 'albumCover' column to songs table.");
+  } catch (err) {
+    console.error("Failed to add albumCover column:", err.message);
+  }
+}
+
+// Recreate insertOrReplace to include lyrics
+const insertOrReplaceWithLyrics = db.prepare(`
+  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover)
+  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover)
+`);
+
 let cachedPlaceholder = null;
 const getPlaceholderImage = () => {
   if (!cachedPlaceholder) {
@@ -84,21 +111,22 @@ async function getSpotifyAccessToken() {
   return data.access_token;
 }
 
-async function getPopularityFromSpotify(artist, title, accessToken) {
+async function getSpotifyData(artist, title, accessToken) {
   try {
     const q = encodeURIComponent(`${artist} ${title}`);
     const url = `https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`;
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) return 0;
+    if (!res.ok) return { popularity: 0, albumCover: null };
     const data = await res.json();
     const track = data.tracks && data.tracks.items && data.tracks.items[0];
-    if (!track || typeof track.popularity !== "number") return 0;
-    // Map Spotify popularity (0-100) to 0-10
-    return Math.round(track.popularity);
-  } catch {
-    return 0;
+    if (!track) return { popularity: 0, albumCover: null };
+    const popularity = typeof track.popularity === "number" ? Math.round(track.popularity) : 0;
+    const albumCover = track.album && track.album.images && track.album.images[0] && track.album.images[0].url ? track.album.images[0].url : null;
+    return { popularity, albumCover };
+  } catch (err) {
+    return { popularity: 0, albumCover: null };
   }
 }
 
@@ -108,20 +136,28 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
     const stats = fs.statSync(fullPath);
     const modified = Math.floor(stats.mtimeMs);
 
-    const dbEntry = existingMap.get(songFile);
-    if (dbEntry && dbEntry.modified === modified) {
-      // No changes, skip tag parsing
-      return;
-    }
+      const dbEntry = existingMap.get(songFile);
+        // Skip processing only if modified matches AND lyrics and albumCover already present
+        if (
+          dbEntry &&
+          dbEntry.modified === modified &&
+          dbEntry.lyrics != null &&
+          dbEntry.albumCover != null
+        ) {
+          return;
+        }
 
     const [artist, ...titleParts] = songFile.replace(".mp3", "").split(" - ");
     const title = titleParts.join(" - ");
     const coverUrl = await extractCoverImage(fullPath);
 
-    // Get popularity from Spotify
+    // Get Spotify data (popularity + album cover)
     let popularity = 0;
+    let albumCover = null;
     if (artist && title) {
-      popularity = await getPopularityFromSpotify(artist.trim(), title.trim(), accessToken);
+      const spotifyData = await getSpotifyData(artist.trim(), title.trim(), accessToken);
+      popularity = spotifyData.popularity || 0;
+      albumCover = spotifyData.albumCover || null;
     }
 
     const song = {
@@ -130,10 +166,65 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
       file: songFile,
       coverUrl,
       popularity,
+      albumCover,
       modified,
     };
 
-    insertOrReplace.run(song);
+    // Fetch lyrics only if DB value is null (or not present)
+    let lyrics = null;
+    try {
+      const needsLyrics = !dbEntry || dbEntry.lyrics == null;
+      if (needsLyrics && artist && title) {
+        const lrclibUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(
+          artist.trim()
+        )}&track_name=${encodeURIComponent(title.trim())}`;
+        console.log(`[lrclib] Fetching lyrics for: ${artist.trim()} - ${title.trim()}`);
+        try {
+          const res = await fetch(lrclibUrl);
+          if (res.ok) {
+            const raw = await res.text();
+            let parsed = null;
+            try {
+              parsed = JSON.parse(raw);
+            } catch (e) {
+              // not JSON — log and continue
+              console.error(`[lrclib] Invalid JSON for ${artist.trim()} - ${title.trim()}: ${e.message}`);
+            }
+
+            const plain = parsed && parsed.plainLyrics;
+            if (plain && plain.trim()) {
+              lyrics = plain;
+              console.log(`[lrclib] Result: found ${plain.length} chars`);
+            } else {
+              console.log(`[lrclib] Result: not found`);
+              // If parsed existed but plainLyrics empty, log truncated raw
+              if (parsed) {
+                const snippet = JSON.stringify(parsed).slice(0, 200);
+                console.log(`[lrclib] Raw response (truncated): ${snippet}`);
+              }
+            }
+            // If parsed existed but we did not set lyrics (edge case), log
+            if (parsed && (!plain || !plain.trim())) {
+              const snippet = JSON.stringify(parsed).slice(0, 200);
+              console.log(`[lrclib] Parsed but no lyrics stored for ${artist.trim()} - ${title.trim()}: ${snippet}`);
+            }
+          } else {
+            console.log(`[lrclib] HTTP ${res.status} for ${artist.trim()} - ${title.trim()}`);
+          }
+        } catch (err) {
+          console.error(`[lrclib] Fetch error for ${artist.trim()} - ${title.trim()}: ${err.message}`);
+        }
+      } else if (dbEntry && dbEntry.lyrics != null) {
+        lyrics = dbEntry.lyrics;
+      }
+    } catch (err) {
+      console.error(`[lrclib] Unexpected error for ${artist} - ${title}: ${err.message}`);
+    }
+
+    song.lyrics = lyrics;
+
+    // Insert or replace including albumCover
+    insertOrReplaceWithLyrics.run(song);
   } catch (err) {
     console.error("Error processing file:", songFile, err);
   }
@@ -164,8 +255,8 @@ const generateManifest = async (songsDirectory, concurrency = 10) => {
     (file) => path.extname(file).toLowerCase() === ".mp3"
   );
 
-  // Fetch existing DB entries
-  const existingEntries = db.prepare("SELECT file, modified FROM songs").all();
+  // Fetch existing DB entries (include lyrics)
+  const existingEntries = db.prepare("SELECT file, modified, lyrics FROM songs").all();
 
   // Create map for quick access
   const existingMap = new Map(existingEntries.map((row) => [row.file, row]));
@@ -195,7 +286,8 @@ const generateManifest = async (songsDirectory, concurrency = 10) => {
     const stats = fs.statSync(fullPath);
     const modified = Math.floor(stats.mtimeMs);
     const existing = existingMap.get(file);
-    return !existing || existing.modified !== modified;
+    // Reprocess if new, modified, OR lyrics is missing (null)
+    return !existing || existing.modified !== modified || (existing && existing.lyrics == null);
   });
 
   console.log(
@@ -210,11 +302,21 @@ const generateManifest = async (songsDirectory, concurrency = 10) => {
     accessToken
   );
 
+  // After processing, log totals and how many songs have lyrics
+  try {
+    const totalSongsRow = db.prepare("SELECT COUNT(*) as cnt FROM songs").get();
+    const lyricsCountRow = db.prepare("SELECT COUNT(*) as cnt FROM songs WHERE lyrics IS NOT NULL").get();
+    console.log(`Manifest generation completed. Processed ${newOrChangedSongs.length} files.`);
+    console.log(`Total songs in DB: ${totalSongsRow.cnt}. Songs with lyrics: ${lyricsCountRow.cnt}.`);
+  } catch (err) {
+    console.error("Error querying lyrics counts:", err.message);
+  }
+
   console.log("Manifest generation completed.");
 };
 
 function init() {
-  generateManifest(songsDir); // You can pass a second arg to limit concurrency if needed
+  return generateManifest(songsDir); // You can pass a second arg to limit concurrency if needed
 }
 
 export default init;

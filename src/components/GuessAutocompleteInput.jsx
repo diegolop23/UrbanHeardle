@@ -48,7 +48,7 @@ const GuessAutocompleteInput = ({ fetchSuggestions, onSubmit, disabled }) => {
   };
 
   const handleSelect = (song) => {
-    const fullText = `${song.artist} - ${song.title}`;
+    const fullText = `${song.title} (${song.artist})`;
     setQuery(fullText);
     setFiltered([]);
     //onSubmit({ artist: song.artist, title: song.title });
@@ -56,12 +56,15 @@ const GuessAutocompleteInput = ({ fetchSuggestions, onSubmit, disabled }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Optional: let users enter guesses manually in "Artist - Title" format
-    const [artist, ...titleParts] = query.split(" - ");
-    const title = titleParts.join(" - ");
-    if (query.split(" - ").length > 1 && artist.trim() && title) {
-      onSubmit({ artist: artist.trim(), title: title });
-      setQuery("");
+    // Parse "Title (Artist)" format
+    const match = query.match(/^(.+?)\s*\(([^)]+)\)$/);
+    if (match) {
+      const title = match[1].trim();
+      const artist = match[2].trim();
+      if (title && artist) {
+        onSubmit({ artist, title });
+        setQuery("");
+      }
     }
   };
 
@@ -91,7 +94,8 @@ const GuessAutocompleteInput = ({ fetchSuggestions, onSubmit, disabled }) => {
               className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
               onClick={() => handleSelect(song)}
             >
-              {song.artist} — {song.title}
+              <span className="font-semibold text-white">{song.title}</span>{" "}
+              <span className="text-gray-400 text-sm font-normal">({song.artist})</span>
             </li>
           ))}
         </ul>
