@@ -140,11 +140,11 @@ function HeardleGame({ streak, setStreak }) {
                   g.title.toLowerCase() === currentSong.title.toLowerCase()
               )
             }
-            streak={0}
+            streak={streak}
           />
         </div>
       </div>
-            streak={streak}
+
       {!gameState.isRevealed && gameState.guesses.length < 6 && (
         <GuessAutocompleteInput
           onSubmit={handleGuessSubmit}

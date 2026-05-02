@@ -8,16 +8,16 @@
 /* ── CSS VARIABLES ─────────────────────────────────────────────── */
 :root {
   --gt-bg:         #0d1117;
-  --gt-card:       #161b22;
-  --gt-card-light: #2a2a2a;
-  --gt-deep:       #090c10;
-  --gt-border:     #3d3d3d;
   --gt-neon:       #39FF14;
-  --gt-neon-dim:   rgba(57, 255, 20, 0.10);
-  --gt-neon-glow:  0 0 8px #39FF14, inset 0 0 4px rgba(57, 255, 20, 0.25);
+  --gt-neon-alt:   #00FF41;
+  --gt-card:       #2a2a2a;
+  --gt-card-2:     #3d3d3d;
   --gt-text:       #e0e0e0;
-  --gt-muted:      #6e7681;
+  --gt-text-dim:   #6e7681;
   --gt-heading:    #ffffff;
+  --gt-deep:       #090c10;
+  --gt-neon-dim:   rgba(57, 255, 20, 0.10);
+  --gt-neon-glow:  0 0 8px #39FF14, inset 0 0 4px rgba(57, 255, 20, 0.1);
   --gt-red:        #ff003c;
   --gt-cyan:       #00ffcc;
   --gt-font-disp:  'Bebas Neue', 'Anton', sans-serif;
@@ -46,8 +46,8 @@ body::before {
     0deg,
     transparent 0px,
     transparent 2px,
-    rgba(0, 0, 0, 0.06) 2px,
-    rgba(0, 0, 0, 0.06) 3px
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 3px
   );
 }
 
@@ -67,7 +67,7 @@ body::after {
 h1, h2, h3, h4 {
   font-family: var(--gt-font-disp) !important;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em;
   color: var(--gt-heading) !important;
 }
 
@@ -79,23 +79,42 @@ p, span, label, li, a {
 @keyframes glitch-burst {
   0%,  87%, 100% {
     text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan);
-    transform: translate(0, 0);
+    transform: translate(0, 0) skewX(0deg);
     clip-path: none;
   }
   88% {
     text-shadow: 4px 0 var(--gt-red), -4px 0 var(--gt-cyan);
-    transform: translate(-3px, 1px);
+    transform: translate(-3px, 1px) skewX(2deg);
     clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%);
   }
   89% {
     text-shadow: -3px 0 var(--gt-red), 3px 0 var(--gt-cyan);
-    transform: translate(3px, -1px);
+    transform: translate(3px, -1px) skewX(-1deg);
     clip-path: polygon(0 55%, 100% 55%, 100% 75%, 0 75%);
   }
   90% {
     text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan);
-    transform: translate(0, 0);
+    transform: translate(0, 0) skewX(0deg);
     clip-path: none;
+  }
+}
+
+@keyframes glitch-btn-hover {
+  0%, 100% {
+    clip-path: none;
+    transform: translate(0, 0);
+  }
+  25% {
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translate(2px, 0);
+  }
+  50% {
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    transform: translate(-2px, 0);
+  }
+  75% {
+    clip-path: none;
+    transform: translate(1px, 0);
   }
 }
 
@@ -108,27 +127,44 @@ p, span, label, li, a {
 .glitch-title {
   font-family: var(--gt-font-disp) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.06em !important;
+  letter-spacing: -0.02em !important;
   text-shadow: 2px 0 var(--gt-red), -2px 0 var(--gt-cyan) !important;
   animation: glitch-burst 9s infinite;
   color: var(--gt-heading) !important;
 }
 
+/* ── GLOBAL BORDER-RADIUS REMOVAL ─────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* Exception: spinners stay circular */
+.animate-spin {
+  border-radius: 50% !important;
+}
+
 /* ── TAILWIND BG OVERRIDES ─────────────────────────────────────── */
+[class*="bg-gray"] {
+  background-color: var(--gt-bg) !important;
+}
+
+/* More specific gray shades */
 .bg-gray-900 {
   background-color: var(--gt-bg) !important;
 }
 
 .bg-gray-800 {
-  background-color: var(--gt-card) !important;
+  background-color: #161b22 !important;
 }
 
 .bg-gray-700 {
-  background-color: var(--gt-card-light) !important;
+  background-color: var(--gt-card) !important;
 }
 
 .bg-gray-600 {
-  background-color: #444 !important;
+  background-color: var(--gt-card-2) !important;
 }
 
 .bg-gray-500 {
@@ -148,9 +184,16 @@ p, span, label, li, a {
   background-color: var(--gt-bg) !important;
 }
 
+/* Blue backgrounds → transparent neon border */
+[class*="bg-blue"] {
+  background-color: transparent !important;
+  color: var(--gt-neon) !important;
+  border: 1px solid var(--gt-neon) !important;
+}
+
 /* ── TAILWIND TEXT OVERRIDES ───────────────────────────────────── */
 .text-gray-400 {
-  color: var(--gt-muted) !important;
+  color: var(--gt-text-dim) !important;
 }
 
 .text-gray-300 {
@@ -185,6 +228,10 @@ p, span, label, li, a {
 }
 
 /* ── TAILWIND BORDER OVERRIDES ─────────────────────────────────── */
+[class*="border-gray"] {
+  border-color: rgba(57, 255, 20, 0.25) !important;
+}
+
 .border-gray-700 {
   border-color: rgba(57, 255, 20, 0.30) !important;
 }
@@ -197,18 +244,15 @@ p, span, label, li, a {
   border-color: var(--gt-neon) !important;
 }
 
-/* ── ROUNDEDNESS REMOVAL ───────────────────────────────────────── */
-.rounded-md,
-.rounded-lg,
-.rounded-xl,
-.rounded-2xl,
-.rounded-3xl {
+/* ── ROUNDEDNESS REMOVAL (Tailwind classes) ────────────────────── */
+[class*="rounded"] {
   border-radius: 0 !important;
 }
 
-/* Remove pill shape from guess rows and nav links; keep spinner circular */
-.rounded-full:not(.animate-spin) {
-  border-radius: 0 !important;
+/* Keep spinner circular */
+.rounded-full.animate-spin,
+[class*="rounded"].animate-spin {
+  border-radius: 9999px !important;
 }
 
 /* ── DIVIDER ───────────────────────────────────────────────────── */
@@ -223,6 +267,7 @@ p, span, label, li, a {
   border: 1px dashed rgba(57, 255, 20, 0.40) !important;
   border-radius: 0 !important;
   background-color: var(--gt-card) !important;
+  box-shadow: var(--gt-neon-glow);
 }
 
 /* Top-left corner marker */
@@ -231,8 +276,8 @@ p, span, label, li, a {
   position: absolute;
   top: -1px;
   left: -1px;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-top: 2px solid var(--gt-neon);
   border-left: 2px solid var(--gt-neon);
   pointer-events: none;
@@ -245,8 +290,8 @@ p, span, label, li, a {
   position: absolute;
   bottom: -1px;
   right: -1px;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-bottom: 2px solid var(--gt-neon);
   border-right: 2px solid var(--gt-neon);
   pointer-events: none;
@@ -254,7 +299,9 @@ p, span, label, li, a {
 }
 
 /* ── BUTTONS ───────────────────────────────────────────────────── */
-button {
+button,
+.btn,
+[type="button"] {
   font-family: var(--gt-font-mono) !important;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -262,6 +309,26 @@ button {
   border-radius: 0 !important;
   transition: all 0.15s ease;
   cursor: pointer;
+  background-color: transparent !important;
+  border: 1px solid var(--gt-neon) !important;
+  color: var(--gt-neon) !important;
+}
+
+button:hover,
+.btn:hover,
+[type="button"]:hover {
+  background-color: var(--gt-neon-dim) !important;
+  box-shadow: 0 0 12px #39FF14 !important;
+  animation: glitch-btn-hover 0.3s ease;
+}
+
+button:disabled,
+.btn:disabled,
+[type="button"]:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
 /* Primary action (was blue-600) */
@@ -300,6 +367,11 @@ button.hover\:bg-gray-700:hover {
   color: var(--gt-neon) !important;
 }
 
+/* Submit button text override — ensure neon not white */
+button[type="submit"] {
+  color: var(--gt-neon) !important;
+}
+
 /* ── PLAY / PAUSE BUTTON (over album cover) ────────────────────── */
 .bg-white.bg-opacity-20 {
   background-color: rgba(0, 0, 0, 0.65) !important;
@@ -319,19 +391,20 @@ button.hover\:bg-gray-700:hover {
 }
 
 /* ── INPUTS ────────────────────────────────────────────────────── */
-input[type='text'],
-input[type='search'],
-input[type='email'] {
+input,
+textarea,
+select {
   font-family: var(--gt-font-mono) !important;
-  background-color: var(--gt-deep) !important;
-  border: 1px solid rgba(57, 255, 20, 0.40) !important;
+  background-color: #111 !important;
+  border: 1px solid var(--gt-card-2) !important;
   border-radius: 0 !important;
   color: var(--gt-text) !important;
   caret-color: var(--gt-neon);
 }
 
-input[type='text']:focus,
-input[type='search']:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none !important;
   border-color: var(--gt-neon) !important;
   box-shadow: 0 0 8px rgba(57, 255, 20, 0.25) !important;
@@ -339,29 +412,35 @@ input[type='search']:focus {
   --tw-ring-shadow: none !important;
 }
 
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: rgba(224, 224, 224, 0.25) !important;
 }
 
-/* Select dropdowns */
-select {
-  font-family: var(--gt-font-mono) !important;
-  background-color: var(--gt-deep) !important;
-  border: 1px solid rgba(57, 255, 20, 0.35) !important;
-  border-radius: 0 !important;
-  color: var(--gt-text) !important;
-}
-
-/* Textarea */
-textarea {
-  font-family: var(--gt-font-mono) !important;
-  background-color: var(--gt-deep) !important;
-  border: 1px solid rgba(57, 255, 20, 0.35) !important;
-  border-radius: 0 !important;
-  color: var(--gt-text) !important;
+/* Range inputs should not have the dark background */
+input[type="range"] {
+  background-color: transparent !important;
+  border: none !important;
+  accent-color: var(--gt-neon);
 }
 
 /* ── AUTOCOMPLETE DROPDOWN ─────────────────────────────────────── */
+ul[class*="bg-gray-800"][class*="border"] {
+  background-color: #1a1a1a !important;
+  border: 1px solid var(--gt-neon) !important;
+  border-radius: 0 !important;
+}
+
+ul[class*="bg-gray-800"] li {
+  color: var(--gt-text) !important;
+  transition: all 0.1s ease;
+}
+
+ul[class*="bg-gray-800"] li:hover {
+  background-color: var(--gt-neon-dim) !important;
+  color: var(--gt-neon) !important;
+}
+
 .hover\:bg-gray-700:hover {
   background-color: var(--gt-neon-dim) !important;
   color: var(--gt-neon) !important;
@@ -403,7 +482,7 @@ a.bg-gray-700 {
 a.bg-gray-800 {
   background-color: transparent !important;
   border: 1px dashed rgba(57, 255, 20, 0.25) !important;
-  color: var(--gt-muted) !important;
+  color: var(--gt-text-dim) !important;
 }
 
 a.bg-gray-800:hover,
@@ -473,6 +552,11 @@ a.hover\:bg-gray-700:hover {
   border: 1px dashed rgba(57, 255, 20, 0.30);
 }
 
+/* ── IMAGES — grayscale + high contrast ────────────────────────── */
+img {
+  filter: grayscale(1) contrast(1.2);
+}
+
 /* ── FEEDBACK WIDGET BUTTON ────────────────────────────────────── */
 .fixed.bottom-4.right-4 button.bg-blue-600 {
   border-radius: 0 !important;
@@ -491,12 +575,12 @@ a.hover\:bg-gray-700:hover {
 .fixed.bottom-4.right-4 .bg-gray-900 {
   border: 1px dashed rgba(57, 255, 20, 0.40) !important;
   border-radius: 0 !important;
-  background-color: var(--gt-card) !important;
+  background-color: #161b22 !important;
 }
 
 /* Feedback close button */
 .text-gray-400.hover\:text-white {
-  color: var(--gt-muted) !important;
+  color: var(--gt-text-dim) !important;
 }
 
 .text-gray-400.hover\:text-white:hover {
@@ -544,34 +628,47 @@ input[type='range'] {
 }
 
 /* ── SCROLLBAR ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
 ::-webkit-scrollbar-track {
   background: var(--gt-bg) !important;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--gt-border) !important;
+  background-color: var(--gt-neon) !important;
   border-radius: 0 !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--gt-neon) !important;
+  background-color: var(--gt-neon-alt) !important;
 }
 
 /* ── HEADER HUD LABEL ──────────────────────────────────────────── */
 /* Adds a "TRACK:01 / SYS:ONLINE" label above the main title */
-header.max-w-4xl {
+header {
   position: relative;
 }
 
-header.max-w-4xl::before {
-  content: '[TRACK:01]  SYS:ONLINE';
+header::before {
+  content: '[ TRACK:01 ] SYS:ONLINE';
   display: block;
   font-family: var(--gt-font-mono);
-  font-size: 0.60rem;
-  color: rgba(57, 255, 20, 0.40);
-  letter-spacing: 0.35em;
+  font-size: 10px;
+  color: var(--gt-neon);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* ── DASHED WIREFRAME BORDERS on section wrappers ──────────────── */
+main {
+  border: 1px dashed rgba(57, 255, 20, 0.40);
+  padding: 1rem;
 }
 
 /* ── FOOTER CREDIT ─────────────────────────────────────────────── */
