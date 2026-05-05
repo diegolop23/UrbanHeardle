@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { getRandomSongLyrics, getSongList } from "../utils/songs";
 import GuessAutocompleteInput from "./GuessAutocompleteInput";
 import ResultDisplay from "./ResultDisplay";
-import { submitStreakScore } from "../utils/score";
 
 const MAX_GUESSES = 6;
 
@@ -49,11 +48,6 @@ export default function LyricsGame({ username, streak, setStreak }) {
 
     init();
   }, []);
-
-  useEffect(() => {
-    if (!username || streak === 0) return;
-    submitStreakScore(username, streak).catch(() => {});
-  }, [streak, username]);
 
   const nextStep = () => {
     setGameState((prev) => {
@@ -125,6 +119,9 @@ export default function LyricsGame({ username, streak, setStreak }) {
 
   const resetGame = async () => {
     setIsLoading(true);
+    const hasWon = gameState.guesses.some(
+      (guess) => guess.isCorrectArtist && guess.isCorrectTitle
+    );
     const song = await getRandomSongLyrics();
     if (song) {
       setCurrentSong(song);
@@ -132,7 +129,10 @@ export default function LyricsGame({ username, streak, setStreak }) {
     }
     setGameState({ step: 1, guesses: [], isRevealed: false });
     setIsLoading(false);
-    setStreak(0);
+
+    if (!hasWon) {
+      setStreak(0);
+    }
   };
 
   if (isLoading || !currentSong) {

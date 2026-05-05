@@ -1,3 +1,6 @@
+import { initTheme } from './utils/theme.js';
+initTheme(); // initialize theme before first render
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

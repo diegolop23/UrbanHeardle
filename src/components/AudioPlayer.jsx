@@ -315,9 +315,9 @@ const AudioPlayer = ({
                 writingMode: "vertical-lr",
                 direction: "rtl",
                 //WebkitAppearance: "slider-vertical",
-                background: `linear-gradient(to top, #39FF14 ${
+                background: `linear-gradient(to top, var(--gt-neon) ${
                   volume * 100
-                }%, rgba(57,255,20,0.15) ${volume * 100}%)`,
+                }%, rgba(var(--gt-neon-rgb), 0.15) ${volume * 100}%)`,
                 borderRadius: "0px",
               }}
             />

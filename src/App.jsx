@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { getRandomSong, getSongList } from "./utils/songs";
 import AudioPlayer from "./components/AudioPlayer";
 import ResultDisplay from "./components/ResultDisplay";
 import GuessAutocompleteInput from "./components/GuessAutocompleteInput";
 import FeedbackWidget from "./components/FeedbackWidget";
 import GameModeBar from "./components/GameModeBar";
+import ThemeSwitcher from "./components/ThemeSwitcher";
 import LyricsGame from "./components/LyricsGame";
 //import Leaderboard from "./components/Leaderboard";
 import { submitStreakScore } from "./utils/score";
@@ -19,6 +20,7 @@ function HeardleGame({ streak, setStreak }) {
     isRevealed: false,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const didSubmitRef = useRef(false);
 
   useEffect(() => {
     const initializeGame = async () => {
@@ -81,6 +83,21 @@ function HeardleGame({ streak, setStreak }) {
   useEffect(() => {
     // no-op: removed artist selector
   }, []);
+
+  useEffect(() => {
+    if (!didSubmitRef.current) {
+      didSubmitRef.current = true;
+      return;
+    }
+
+    const username = localStorage.getItem("username") || "Guest";
+
+    if (!username || streak === 0) return;
+
+    submitStreakScore(username, streak).catch((error) => {
+      console.error("Error submitting heardle streak score:", error);
+    });
+  }, [streak]);
 
   const resetGame = async () => {
     const previousGuesses = gameState.guesses;
@@ -186,27 +203,58 @@ function HeardleGame({ streak, setStreak }) {
 }
 
 function App() {
-  const [username] = useState(() => {
-    return localStorage.getItem("username") || "Guest";
+  const [username] = useState(() => localStorage.getItem("username") || "Guest");
+  const [heardleStreak, setHeardleStreak] = useState(() => {
+    const storedStreak = Number(localStorage.getItem("heardleStreak"));
+    return Number.isFinite(storedStreak) && storedStreak > 0 ? storedStreak : 0;
   });
-  const [streak, setStreak] = useState(0);
-  const location = useLocation();
+  const [lyricsStreak, setLyricsStreak] = useState(() => {
+    const storedStreak = Number(localStorage.getItem("lyricsStreak"));
+    return Number.isFinite(storedStreak) && storedStreak > 0 ? storedStreak : 0;
+  });
+  const heardleSubmitRef = useRef(false);
+  const lyricsSubmitRef = useRef(false);
 
   useEffect(() => {
-    if (!username || streak === 0) return;
-    submitStreakScore(username, streak).catch((error) => {
-      console.error("Error submitting streak score:", error);
+    localStorage.setItem("heardleStreak", String(heardleStreak));
+  }, [heardleStreak]);
+
+  useEffect(() => {
+    localStorage.setItem("lyricsStreak", String(lyricsStreak));
+  }, [lyricsStreak]);
+
+  useEffect(() => {
+    if (!heardleSubmitRef.current) {
+      heardleSubmitRef.current = true;
+      return;
+    }
+
+    if (!username || heardleStreak === 0) return;
+    submitStreakScore(username, heardleStreak).catch((error) => {
+      console.error("Error submitting heardle streak score:", error);
     });
-  }, [streak, username]);
+  }, [heardleStreak, username]);
 
   useEffect(() => {
-    setStreak(0);
-  }, [location.pathname]);
+    if (!lyricsSubmitRef.current) {
+      lyricsSubmitRef.current = true;
+      return;
+    }
+
+    if (!username || lyricsStreak === 0) return;
+    submitStreakScore(username, lyricsStreak).catch((error) => {
+      console.error("Error submitting lyrics streak score:", error);
+    });
+  }, [lyricsStreak, username]);
 
   return (
     <div className="relative">
       <GameModeBar />
-      {/* Floating Leaderboard Bubble 
+      {/* Theme Switcher - fixed position in top-right */}
+      <div className="fixed top-4 right-4 z-40">
+        <ThemeSwitcher />
+      </div>
+      {/* Floating Leaderboard Bubble
       <div className="hidden md:block fixed left-4 top-1/2 transform -translate-y-1/2 z-10">
         <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700 w-60 hover:w-64 transition-all duration-200">
           <Leaderboard username={username} setUsername={setUsername} />
@@ -222,22 +270,22 @@ function App() {
           <Routes>
             <Route
               path="/heardle"
-              element={<HeardleGame streak={streak} setStreak={setStreak} />}
+              element={
+                <HeardleGame streak={heardleStreak} setStreak={setHeardleStreak} />
+              }
             />
             <Route
               path="/lyrics"
               element={
                 <LyricsGame
                   username={username}
-                  streak={streak}
-                  setStreak={setStreak}
+                  streak={lyricsStreak}
+                  setStreak={setLyricsStreak}
                 />
               }
             />
             <Route path="*" element={<Navigate to="/heardle" replace />} />
           </Routes>
-          {/* Keep the app in sync with route changes so moving between modes resets the shared streak. */}
-          {location.pathname && null}
         </main>
       </div>
     </div>
