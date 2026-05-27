@@ -29,72 +29,31 @@ db.prepare(
 `
 ).run();
 
+// Add missing columns if they don't exist (run AFTER table creation)
+const addColumnIfNotExists = (columnName, columnDef) => {
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info('songs')").all();
+    const columnExists = tableInfo.some((c) => c.name === columnName);
+    if (!columnExists) {
+      db.prepare(`ALTER TABLE songs ADD COLUMN ${columnDef}`).run();
+      console.log(`Added '${columnName}' column to songs table.`);
+    }
+  } catch (err) {
+    console.error(`Failed to add ${columnName} column:`, err.message);
+  }
+};
+
+addColumnIfNotExists('lyrics', 'lyrics TEXT');
+addColumnIfNotExists('albumCover', 'albumCover TEXT');
+addColumnIfNotExists('releaseYear', 'releaseYear INTEGER');
+addColumnIfNotExists('genre', 'genre TEXT');
+addColumnIfNotExists('bpm', 'bpm INTEGER');
+
 db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_file ON songs(file)").run();
 db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist)").run();
 db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_year ON songs(releaseYear)").run();
 db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre)").run();
 
-const insertOrReplace = db.prepare(`
-  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover, releaseYear, genre, bpm)
-  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover, @releaseYear, @genre, @bpm)
-`);
-
-// Ensure lyrics column exists (non-destructive)
-const tableInfo = db.prepare("PRAGMA table_info('songs')").all();
-if (!tableInfo.find((c) => c.name === "lyrics")) {
-  try {
-    db.prepare("ALTER TABLE songs ADD COLUMN lyrics TEXT").run();
-    console.log("Added 'lyrics' column to songs table.");
-  } catch (err) {
-    console.error("Failed to add lyrics column:", err.message);
-  }
-}
-
-// Ensure albumCover column exists (non-destructive)
-if (!tableInfo.find((c) => c.name === "albumCover")) {
-  try {
-    db.prepare("ALTER TABLE songs ADD COLUMN albumCover TEXT").run();
-    console.log("Added 'albumCover' column to songs table.");
-  } catch (err) {
-    console.error("Failed to add albumCover column:", err.message);
-  }
-}
-
-// Ensure releaseYear column exists (non-destructive)
-if (!tableInfo.find((c) => c.name === "releaseYear")) {
-  try {
-    db.prepare("ALTER TABLE songs ADD COLUMN releaseYear INTEGER").run();
-    console.log("Added 'releaseYear' column to songs table.");
-  } catch (err) {
-    console.error("Failed to add releaseYear column:", err.message);
-  }
-}
-
-// Ensure genre column exists (non-destructive)
-if (!tableInfo.find((c) => c.name === "genre")) {
-  try {
-    db.prepare("ALTER TABLE songs ADD COLUMN genre TEXT").run();
-    console.log("Added 'genre' column to songs table.");
-  } catch (err) {
-    console.error("Failed to add genre column:", err.message);
-  }
-}
-
-// Ensure bpm column exists (non-destructive)
-if (!tableInfo.find((c) => c.name === "bpm")) {
-  try {
-    db.prepare("ALTER TABLE songs ADD COLUMN bpm INTEGER").run();
-    console.log("Added 'bpm' column to songs table.");
-  } catch (err) {
-    console.error("Failed to add bpm column:", err.message);
-  }
-}
-
-// Recreate insertOrReplace to include all metadata fields
-const insertOrReplaceWithLyrics = db.prepare(`
-  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover, releaseYear, genre, bpm)
-  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover, @releaseYear, @genre, @bpm)
-`);
 
 let cachedPlaceholder = null;
 const getPlaceholderImage = () => {
@@ -264,6 +223,10 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
     }
 
     song.lyrics = lyrics;
+    const insertOrReplaceWithLyrics = db.prepare(`
+      INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover, releaseYear, genre, bpm)
+      VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover, @releaseYear, @genre, @bpm)
+    `);
 
     // Insert or replace including all metadata fields
     insertOrReplaceWithLyrics.run(song);
