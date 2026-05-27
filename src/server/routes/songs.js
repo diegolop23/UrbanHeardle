@@ -25,7 +25,7 @@ router.get("/list", (req, res) => {
         cachedSongs = global.initialCachedSongs;
         console.log(`[songs/list] Using pre-loaded cache: ${cachedSongs.length} songs`);
       } else {
-        const sql = "SELECT title, artist FROM songs";
+        const sql = "SELECT title, artist, releaseYear, genre, bpm FROM songs";
         console.log(`[songs/list] Running SQL: ${sql}`);
         cachedSongs = db.prepare(sql).all();
       }
@@ -35,6 +35,9 @@ router.get("/list", (req, res) => {
       songs: cachedSongs.map((song) => ({
         title: song.title,
         artist: song.artist,
+        releaseYear: song.releaseYear,
+        genre: song.genre,
+        bpm: song.bpm,
       })),
     });
   } catch (err) {
@@ -52,11 +55,11 @@ router.get("/random", (req, res) => {
         console.log(`[songs/random] Using pre-loaded cache: ${cachedSongs.length} songs`);
       } else {
         cachedSongs = db
-          .prepare("SELECT title, artist, file, coverUrl, albumCover FROM songs")
+          .prepare("SELECT title, artist, file, coverUrl, albumCover, releaseYear, genre, bpm FROM songs")
           .all();
         console.log(`[songs/random] Cached ${cachedSongs.length} songs from DB`);
       }
-      shuffledPlaylist = shuffle([...cachedSongs]);
+      shuffledPlaylist = fisherYatesShuffle([...cachedSongs]);
     }
 
     if (cachedSongs.length === 0) {
@@ -88,7 +91,7 @@ router.get("/random", (req, res) => {
           Math.floor(Math.random() * availableArtistSongs.length)
         ];
     } else {
-      // Pick next from shuffled playlist
+      // Pick next from shuffled playlist using Fisher-Yates
       while (currentIndex < shuffledPlaylist.length) {
         const candidate = shuffledPlaylist[currentIndex];
         currentIndex++;
@@ -99,9 +102,9 @@ router.get("/random", (req, res) => {
         }
       }
 
-      // All songs exhausted or recently played, reshuffle
+      // All songs exhausted or recently played, reshuffle with Fisher-Yates
       if (!nextSong) {
-        shuffledPlaylist = shuffle([...cachedSongs]);
+        shuffledPlaylist = fisherYatesShuffle([...cachedSongs]);
         currentIndex = 0;
         nextSong = shuffledPlaylist[currentIndex++];
       }
@@ -124,7 +127,7 @@ router.get("/random", (req, res) => {
 // Random song that has lyrics (for Guess by Lyrics gamemode)
 router.get("/random/lyrics", (req, res) => {
   try {
-    const sql = "SELECT title, artist, file, coverUrl, albumCover, lyrics FROM songs WHERE lyrics IS NOT NULL";
+    const sql = "SELECT title, artist, file, coverUrl, albumCover, lyrics, releaseYear, genre, bpm FROM songs WHERE lyrics IS NOT NULL";
     console.log(`[songs/random/lyrics] Running SQL: ${sql}`);
     if (!cachedLyricsSongs) {
       // Try to use pre-loaded cache from startup
@@ -135,7 +138,7 @@ router.get("/random/lyrics", (req, res) => {
         cachedLyricsSongs = db.prepare(sql).all();
         console.log(`[songs/random/lyrics] cache-fill: returned ${cachedLyricsSongs.length} rows from DB`);
       }
-      shuffledPlaylistLyrics = shuffle([...cachedLyricsSongs]);
+      shuffledPlaylistLyrics = fisherYatesShuffle([...cachedLyricsSongs]);
 
       if (cachedLyricsSongs.length === 0) {
         try {
@@ -187,7 +190,7 @@ router.get("/random/lyrics", (req, res) => {
       }
 
       if (!nextSong) {
-        shuffledPlaylistLyrics = shuffle([...cachedLyricsSongs]);
+        shuffledPlaylistLyrics = fisherYatesShuffle([...cachedLyricsSongs]);
         currentIndexLyrics = 0;
         nextSong = shuffledPlaylistLyrics[currentIndexLyrics++];
       }
@@ -214,7 +217,7 @@ router.get("/", (req, res) => {
   if (!cachedSongs) {
     try {
       cachedSongs = db
-        .prepare("SELECT title, artist, file, coverUrl, albumCover FROM songs")
+        .prepare("SELECT title, artist, file, coverUrl, albumCover, releaseYear, genre, bpm FROM songs")
         .all();
       console.log(`Cached ${cachedSongs.length} songs`);
     } catch (err) {
@@ -237,8 +240,14 @@ function getSafeFilePath(filename) {
   return a;
 }
 
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+// Fisher-Yates shuffle algorithm - unbiased random permutation
+function fisherYatesShuffle(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 export default router;

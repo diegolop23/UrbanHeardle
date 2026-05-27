@@ -19,16 +19,24 @@ db.prepare(
     file TEXT UNIQUE,
     coverUrl TEXT,
     popularity INTEGER,
-    modified INTEGER
+    modified INTEGER,
+    lyrics TEXT,
+    albumCover TEXT,
+    releaseYear INTEGER,
+    genre TEXT,
+    bpm INTEGER
   )
 `
 ).run();
 
 db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_file ON songs(file)").run();
+db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_artist ON songs(artist)").run();
+db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_year ON songs(releaseYear)").run();
+db.prepare("CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre)").run();
 
 const insertOrReplace = db.prepare(`
-  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified)
-  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified)
+  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover, releaseYear, genre, bpm)
+  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover, @releaseYear, @genre, @bpm)
 `);
 
 // Ensure lyrics column exists (non-destructive)
@@ -52,10 +60,40 @@ if (!tableInfo.find((c) => c.name === "albumCover")) {
   }
 }
 
-// Recreate insertOrReplace to include lyrics
+// Ensure releaseYear column exists (non-destructive)
+if (!tableInfo.find((c) => c.name === "releaseYear")) {
+  try {
+    db.prepare("ALTER TABLE songs ADD COLUMN releaseYear INTEGER").run();
+    console.log("Added 'releaseYear' column to songs table.");
+  } catch (err) {
+    console.error("Failed to add releaseYear column:", err.message);
+  }
+}
+
+// Ensure genre column exists (non-destructive)
+if (!tableInfo.find((c) => c.name === "genre")) {
+  try {
+    db.prepare("ALTER TABLE songs ADD COLUMN genre TEXT").run();
+    console.log("Added 'genre' column to songs table.");
+  } catch (err) {
+    console.error("Failed to add genre column:", err.message);
+  }
+}
+
+// Ensure bpm column exists (non-destructive)
+if (!tableInfo.find((c) => c.name === "bpm")) {
+  try {
+    db.prepare("ALTER TABLE songs ADD COLUMN bpm INTEGER").run();
+    console.log("Added 'bpm' column to songs table.");
+  } catch (err) {
+    console.error("Failed to add bpm column:", err.message);
+  }
+}
+
+// Recreate insertOrReplace to include all metadata fields
 const insertOrReplaceWithLyrics = db.prepare(`
-  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover)
-  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover)
+  INSERT OR REPLACE INTO songs (title, artist, file, coverUrl, popularity, modified, lyrics, albumCover, releaseYear, genre, bpm)
+  VALUES (@title, @artist, @file, @coverUrl, @popularity, @modified, @lyrics, @albumCover, @releaseYear, @genre, @bpm)
 `);
 
 let cachedPlaceholder = null;
@@ -118,15 +156,16 @@ async function getSpotifyData(artist, title, accessToken) {
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) return { popularity: 0, albumCover: null };
+    if (!res.ok) return { popularity: 0, albumCover: null, releaseYear: null };
     const data = await res.json();
     const track = data.tracks && data.tracks.items && data.tracks.items[0];
-    if (!track) return { popularity: 0, albumCover: null };
+    if (!track) return { popularity: 0, albumCover: null, releaseYear: null };
     const popularity = typeof track.popularity === "number" ? Math.round(track.popularity) : 0;
     const albumCover = track.album && track.album.images && track.album.images[0] && track.album.images[0].url ? track.album.images[0].url : null;
-    return { popularity, albumCover };
+    const releaseYear = track.album && track.album.release_date ? parseInt(track.album.release_date.substring(0, 4), 10) : null;
+    return { popularity, albumCover, releaseYear };
   } catch (err) {
-    return { popularity: 0, albumCover: null };
+    return { popularity: 0, albumCover: null, releaseYear: null };
   }
 }
 
@@ -151,13 +190,15 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
     const title = titleParts.join(" - ");
     const coverUrl = await extractCoverImage(fullPath);
 
-    // Get Spotify data (popularity + album cover)
+    // Get Spotify data (popularity + album cover + release year)
     let popularity = 0;
     let albumCover = null;
+    let releaseYear = null;
     if (artist && title) {
       const spotifyData = await getSpotifyData(artist.trim(), title.trim(), accessToken);
       popularity = spotifyData.popularity || 0;
       albumCover = spotifyData.albumCover || null;
+      releaseYear = spotifyData.releaseYear || null;
     }
 
     const song = {
@@ -167,6 +208,7 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
       coverUrl,
       popularity,
       albumCover,
+      releaseYear,
       modified,
     };
 
@@ -223,7 +265,7 @@ const processFile = async (songFile, songsDirectory, existingMap, accessToken) =
 
     song.lyrics = lyrics;
 
-    // Insert or replace including albumCover
+    // Insert or replace including all metadata fields
     insertOrReplaceWithLyrics.run(song);
   } catch (err) {
     console.error("Error processing file:", songFile, err);

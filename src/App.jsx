@@ -8,6 +8,7 @@ import FeedbackWidget from "./components/FeedbackWidget";
 import GameModeBar from "./components/GameModeBar";
 import ThemeSwitcher from "./components/ThemeSwitcher";
 import LyricsGame from "./components/LyricsGame";
+import StatisticsDashboard from "./components/StatisticsDashboard";
 //import Leaderboard from "./components/Leaderboard";
 import { submitStreakScore } from "./utils/score";
 
@@ -78,6 +79,17 @@ function HeardleGame({ streak, setStreak }) {
       guesses: newGuesses,
       isRevealed: isCorrect || maxGuessesReached,
     }));
+
+    // Record game statistics
+    if (window.recordGameStatistics) {
+      window.recordGameStatistics({
+        isWin: isCorrect,
+        guesses: newGuesses.length,
+        streak: isCorrect ? streak + 1 : 0,
+        artist: currentSong?.artist,
+        title: currentSong?.title,
+      });
+    }
   };
 
   useEffect(() => {
@@ -212,8 +224,27 @@ function App() {
     const storedStreak = Number(localStorage.getItem("lyricsStreak"));
     return Number.isFinite(storedStreak) && storedStreak > 0 ? storedStreak : 0;
   });
+  const [showStats, setShowStats] = useState(false);
   const heardleSubmitRef = useRef(false);
   const lyricsSubmitRef = useRef(false);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + S: Open statistics
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        setShowStats(true);
+      }
+      // Escape: Close statistics
+      if (e.key === 'Escape' && showStats) {
+        setShowStats(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showStats]);
 
   useEffect(() => {
     localStorage.setItem("heardleStreak", String(heardleStreak));
@@ -249,11 +280,15 @@ function App() {
 
   return (
     <div className="relative">
-      <GameModeBar />
+      <GameModeBar onOpenStats={() => setShowStats(true)} />
       {/* Theme Switcher - fixed position in top-right */}
       <div className="fixed top-4 right-4 z-40">
         <ThemeSwitcher />
       </div>
+      {/* Statistics Dashboard Modal */}
+      {showStats && (
+        <StatisticsDashboard onClose={() => setShowStats(false)} />
+      )}
       {/* Floating Leaderboard Bubble
       <div className="hidden md:block fixed left-4 top-1/2 transform -translate-y-1/2 z-10">
         <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700 w-60 hover:w-64 transition-all duration-200">
